@@ -1,0 +1,295 @@
+.caissier-container {
+  width: 100%;
+}
+
+/* Header */
+.caissier-header {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.caissier-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #2c3e50;
+}
+
+.caissier-subtitle {
+  color: #78909c;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.caissier-add-btn {
+  background: linear-gradient(135deg, #1565c0, #2196f3);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+/* Stats */
+.caissier-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.caissier-stat-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.caissier-stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.caissier-stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.caissier-stat-label {
+  color: #78909c;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Message */
+.caissier-msg {
+  border-radius: 10px;
+  padding: 12px 18px;
+  margin-bottom: 18px;
+  font-weight: 500;
+}
+
+.caissier-msg-success {
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  color: #2e7d32;
+}
+
+.caissier-msg-error {
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  color: #c62828;
+}
+
+/* Formulaire */
+.caissier-form-container {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.caissier-form-title {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 17px;
+  font-weight: 700;
+  border-bottom: 2px solid #e3f2fd;
+  padding-bottom: 12px;
+}
+
+.caissier-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.caissier-label {
+  display: block;
+  color: #546e7a;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+.caissier-input,
+.caissier-select {
+  background: #f8f9fa;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: #2c3e50;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+}
+
+.caissier-input:focus,
+.caissier-select:focus {
+  border-color: #2196f3;
+}
+
+.caissier-form-actions {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 10px;
+}
+
+.caissier-submit-btn {
+  background: linear-gradient(135deg, #1565c0, #2196f3);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.caissier-cancel-btn {
+  background: #fff;
+  color: #2196f3;
+  border: 1.5px solid #2196f3;
+  border-radius: 10px;
+  padding: 11px 24px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Table */
+.caissier-table-container {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.caissier-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.caissier-table-header {
+  color: #546e7a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 14px 16px;
+  text-align: left;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e0e0e0;
+  text-transform: uppercase;
+}
+
+.caissier-table-row-even {
+  background: #fff;
+}
+
+.caissier-table-row-odd {
+  background: #fafafa;
+}
+
+.caissier-table-cell {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.caissier-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.caissier-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.caissier-user-name {
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.caissier-user-email {
+  color: #546e7a;
+  font-size: 14px;
+}
+
+.caissier-role-badge {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.caissier-role-badge-admin {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.caissier-role-badge-caissier {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.caissier-edit-btn {
+  background: #e3f2fd;
+  border: none;
+  color: #1565c0;
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 6px;
+  transition: 0.2s;
+}
+
+.caissier-edit-btn:hover {
+  background: #bbdefb;
+  transform: scale(1.05);
+}
+.caissier-delete-btn {
+  background: #ffebee;
+  border: none;
+  color: #c62828;
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+.caissier-loading {
+  color: #78909c;
+  text-align: center;
+  padding: 40px;
+}

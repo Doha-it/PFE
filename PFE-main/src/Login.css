@@ -1,0 +1,249 @@
+.lp-root {
+  display: flex;
+  min-height: 100vh;
+  background: var(--page-bg);
+}
+
+.lp-left {
+  flex: 1;
+  background: linear-gradient(
+    160deg, #1e3a5f 0%, #1565C0 100%
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-left::before {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+  top: -80px; right: -80px;
+}
+
+.lp-left::after {
+  content: '';
+  position: absolute;
+  width: 200px; height: 200px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+  bottom: -50px; left: -50px;
+}
+
+.lp-brand {
+  text-align: center;
+  margin-bottom: 50px;
+  z-index: 1;
+}
+
+.lp-logo { font-size: 70px; margin-bottom: 15px; }
+
+.lp-app-name {
+  font-size: 32px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 2px;
+}
+
+.lp-tagline {
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.lp-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1;
+  width: 100%;
+  max-width: 300px;
+}
+
+.lp-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: rgba(255,255,255,0.9);
+  font-size: 14px;
+  backdrop-filter: blur(5px);
+}
+
+.lp-feature-icon { font-size: 20px; }
+
+.lp-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #f5f6fa;
+}
+
+.lp-card {
+  width: 100%;
+  max-width: 420px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.lp-card-header { margin-bottom: 28px; }
+
+.lp-card-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.lp-card-header p {
+  color: #78909C;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.lp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lp-field label {
+  display: block;
+  color: #546E7A;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+.lp-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border: 1.5px solid #E0E0E0;
+  border-radius: 10px;
+  padding: 0 14px;
+  height: 50px;
+  transition: all 0.2s;
+}
+
+.lp-input-wrap:focus-within {
+  border-color: #2196F3;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(33,150,243,0.1);
+}
+
+.lp-icon { font-size: 17px; margin-right: 10px; }
+
+.lp-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.lp-input-wrap input::placeholder {
+  color: #B0BEC5;
+}
+
+.lp-eye {
+  background: none;
+  border: none;
+  font-size: 17px;
+  padding: 5px;
+  color: #78909C;
+}
+
+.lp-error {
+  background: #FFEBEE;
+  border: 1px solid #FFCDD2;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #C62828;
+  font-size: 13px;
+}
+
+.lp-btn {
+  width: 100%;
+  background: linear-gradient(
+    135deg, #1565C0 0%, #2196F3 100%
+  );
+  color: white;
+  border: none;
+  border-radius: 10px;
+  height: 50px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: all 0.2s;
+  margin-top: 5px;
+  letter-spacing: 0.5px;
+}
+
+.lp-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(33,150,243,0.35);
+}
+
+.lp-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.lp-roles {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.lp-role {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1.5px solid;
+}
+
+.lp-role span { font-size: 22px; }
+
+.lp-role strong {
+  display: block;
+  color: #2c3e50;
+  font-size: 13px;
+}
+
+.lp-role p {
+  color: #78909C;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.lp-role--admin {
+  background: #E3F2FD;
+  border-color: #90CAF9;
+}
+
+.lp-role--caissier {
+  background: #E8F5E9;
+  border-color: #A5D6A7;
+}
+
+@media (max-width: 768px) {
+  .lp-left { display: none; }
+  .lp-right { padding: 20px; background: #1e3a5f; }
+  .lp-card { background: #FFFFFF; }
+}
