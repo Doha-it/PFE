@@ -1,18 +1,37 @@
 import "./Layout.css";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const NAV = [
-  { label: "Accueil",        icon: "🏠" },
-  { label: "Stock/Produit",  icon: "📦" },
-  { label: "Fournisseur",    icon: "🏭" },
-  { label: "Caissier",       icon: "👥" },
-  { label: "Vente",          icon: "🛒" },
-  { label: "Historique",     icon: "📋" },
-  { label: "Paramètre",      icon: "⚙️" },
+  { id: "accueil",     label: "Accueil",        icon: "🏠", path: "/admin/accueil" },
+  { id: "stock",       label: "Stock/Produit",   icon: "📦", path: "/admin/stock" },
+  { id: "fournisseurs", label: "Fournisseur",   icon: "🏭", path: "/admin/fournisseurs" },
+  { id: "caissiers",   label: "Caissier",       icon: "👥", path: "/admin/caissiers" },
+  { id: "ventes",      label: "Vente",          icon: "🛒", path: "/admin/ventes" },
+  { id: "historique",  label: "Historique",     icon: "📋", path: "/admin/historique" },
+  { id: "parametres",  label: "Paramètre",      icon: "⚙️", path: "/admin/parametres" },
 ];
 
-export default function Layout({
-  activeNav, onNav, adminName, onLogout, children
-}) {
+export default function Layout({ adminName, onLogout, children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ Déterminer la page active à partir de l'URL
+  const getActiveNav = () => {
+    const currentPath = location.pathname;
+    const item = NAV.find(item => item.path === currentPath);
+    return item ? item.id : "accueil";
+  };
+
+  const activeNav = getActiveNav();
+
+  // ✅ Navigation vers une page
+  const handleNav = (navId) => {
+    const item = NAV.find(item => item.id === navId);
+    if (item) {
+      navigate(item.path);
+    }
+  };
+
   return (
     <div className="ly-root">
       <aside className="ly-sidebar">
@@ -23,12 +42,12 @@ export default function Layout({
         <nav className="ly-nav">
           {NAV.map(item => (
             <button
-              key={item.label}
+              key={item.id}
               className={`ly-item ${
-                activeNav === item.label
+                activeNav === item.id
                   ? "ly-item--active" : ""
               }`}
-              onClick={() => onNav(item.label)}>
+              onClick={() => handleNav(item.id)}>
               <span className="ly-item-icon">
                 {item.icon}
               </span>

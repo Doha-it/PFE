@@ -27,9 +27,8 @@ export default function CaissierApp({ nom, userId, onLogout }) {
 
   const [codeManuel, setCodeManuel] = useState("");
 
-
-  const lastScannedRef = useRef("");      // ← ajoute
-  const lastTimeRef = useRef(0);          // ← ajoute
+  const lastScannedRef = useRef("");
+  const lastTimeRef = useRef(0);
   const scannerRef = useRef(null);
 
   useEffect(() => {
@@ -42,12 +41,12 @@ export default function CaissierApp({ nom, userId, onLogout }) {
       .finally(() => setProduitsLoading(false));
   }, []);
 
-  const flash = (m) => {
-    setMsg(m);
-    setTimeout(() => setMsg(""), 3000);
+  const flash = (m, isError = false) => {
+  const message = { text: m, error: isError };
+  setMsg(message);
+  setTimeout(() => setMsg(null), 3000);
   };
 
-  // Normalise : retire accents + minuscules
   const normalize = (str) =>
     str?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || "";
 
@@ -79,7 +78,6 @@ export default function CaissierApp({ nom, userId, onLogout }) {
     return sortDir === "asc" ? " ↑" : " ↓";
   };
 
-  // Décrémente le stock affiché localement pour un produit donné
   const decrementerStockLocal = (codeBarres, qte = 1) => {
     setProduits(prev => prev.map(p =>
       p.codeBarres === codeBarres
@@ -88,7 +86,6 @@ export default function CaissierApp({ nom, userId, onLogout }) {
     ));
   };
 
-  // Réincrémente le stock affiché localement pour un produit donné
   const incrementerStockLocal = (codeBarres, qte = 1) => {
     setProduits(prev => prev.map(p =>
       p.codeBarres === codeBarres
@@ -97,28 +94,40 @@ export default function CaissierApp({ nom, userId, onLogout }) {
     ));
   };
 
-  // Stock disponible affiché (local) pour un code-barres donné
   const getStockDisponible = (codeBarres) =>
     produits.find(p => p.codeBarres === codeBarres)?.quantite ?? 0;
 
-  // Resynchronise le stock depuis le backend (ex: après annulation)
   const resyncProduits = () => {
     getTousProduits()
       .then(setProduits)
       .catch(console.error);
   };
 
-  // Ajouter un produit via la table (sans scan)
+  // ✅ AJOUTER PRODUIT - CORRIGÉ
   const handleAjouterProduit = async (produit) => {
     setLoading(true);
     try {
+      if (!produit || !produit.codeBarres) {
+        flash("❌ Produit invalide !");
+        setLoading(false);
+        return;
+      }
+      
       let currentVenteId = venteId;
       if (!currentVenteId) {
         const v = await creerVente(userId);
         currentVenteId = v.id;
         setVenteId(v.id);
       }
+      
       const detail = await ajouterArticle(currentVenteId, produit.codeBarres, 1);
+      
+      if (!detail || !detail.nomProduit) {
+        flash("❌ Erreur lors de l'ajout du produit !");
+        setLoading(false);
+        return;
+      }
+      
       setArticles(prev => {
         const ex = prev.find(a => a.codeBarres === produit.codeBarres);
         if (ex) {
@@ -133,14 +142,15 @@ export default function CaissierApp({ nom, userId, onLogout }) {
       setTotal(t => parseFloat((t + parseFloat(detail.prix)).toFixed(2)));
       decrementerStockLocal(produit.codeBarres, 1);
       flash("✅ " + detail.nomProduit + " ajouté !");
-    } catch {
-      flash("❌ Produit introuvable !");
+
+    } catch (error) {
+      console.error("❌ Erreur ajout produit:", error);
+      flash("❌ Produit introuvable ou code-barres invalide !");
     } finally {
       setLoading(false);
     }
   };
 
-  // Démarrer scan
   const startScan = async () => {
     setLoading(true);
     let currentVenteId = venteId;
@@ -164,16 +174,13 @@ export default function CaissierApp({ nom, userId, onLogout }) {
         await qr.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 300, height: 150 } },
-
-        async (code) => {
-          const now = Date.now();
-          if (code === lastScannedRef.current && now - lastTimeRef.current < 2000) return;
-          lastScannedRef.current = code;
-          lastTimeRef.current = now;
-          await handleCodeScan(code, currentVenteId);
-        },
-
-
+          async (code) => {
+            const now = Date.now();
+            if (code === lastScannedRef.current && now - lastTimeRef.current < 2000) return;
+            lastScannedRef.current = code;
+            lastTimeRef.current = now;
+            await handleCodeScan(code, currentVenteId);
+          },
           () => {}
         );
       } catch {
@@ -190,10 +197,20 @@ export default function CaissierApp({ nom, userId, onLogout }) {
     setScanning(false);
   };
 
+  // ✅ HANDLE CODE SCAN - CORRIGÉ
   const handleCodeScan = async (code, currentVenteId) => {
     setLoading(true);
     try {
+      console.log("🔍 Scan du code:", code);
+      
       const detail = await ajouterArticle(currentVenteId, code, 1);
+      
+      if (!detail || !detail.nomProduit) {
+        flash("❌ Produit introuvable !", true);
+        setLoading(false);
+        return;
+      }
+      
       setArticles(prev => {
         const ex = prev.find(a => a.codeBarres === code);
         if (ex) {
@@ -208,7 +225,9 @@ export default function CaissierApp({ nom, userId, onLogout }) {
       setTotal(t => parseFloat((t + parseFloat(detail.prix)).toFixed(2)));
       decrementerStockLocal(code, 1);
       flash("✅ " + detail.nomProduit + " ajouté !");
-    } catch {
+      
+    } catch (error) {
+      console.error("❌ Erreur scan:", error);
       flash("❌ Produit introuvable !");
     } finally {
       setLoading(false);
@@ -233,7 +252,6 @@ export default function CaissierApp({ nom, userId, onLogout }) {
     if (!confirm("Annuler cette vente ?")) return;
     if (venteId) { try { await annulerVente(venteId); } catch (e) { console.error(e); } }
     resetVente();
-    // Resynchronise le stock affiché (le backend peut avoir réincrémenté le stock)
     resyncProduits();
   };
 
@@ -244,7 +262,6 @@ export default function CaissierApp({ nom, userId, onLogout }) {
 
   return (
     <div className="ca-root">
-      {/* Header */}
       <header className="ca-header">
         <div className="ca-header-left">
           <span className="ca-logo">📚</span>
@@ -259,7 +276,6 @@ export default function CaissierApp({ nom, userId, onLogout }) {
         <button className="ca-logout" onClick={onLogout}>🚪</button>
       </header>
 
-      {/* Tabs */}
       <div className="ca-tabs">
         {[
           { key: "scan", label: "📷 Scanner" },
@@ -274,174 +290,175 @@ export default function CaissierApp({ nom, userId, onLogout }) {
         ))}
       </div>
 
-      {/* Message */}
-      {msg && <div className="ca-msg">{msg}</div>}
+        {msg && (
+    <div className={`ca-msg ${msg.error ? "ca-msg-error" : "ca-msg-success"}`}>
+      {msg.text}
+    </div>
+         )}
 
       <div className="ca-body">
-
-        {/* ═══ PAGE SCAN ═══ */}
-          {page === "scan" && (
-  <div className="ca-scan-split">
-
-    {/* ── GAUCHE : catalogue ── */}
-    <div className="ca-scan-right">
-      <div className="ca-catalogue-header">
-        <h3 className="ca-catalogue-title">📦 Catalogue produits</h3>
-        <div className="ca-catalogue-filters">
-          <div className="ca-search-wrap">
-            <span className="ca-search-icon">🔍</span>
-            <input
-              className="ca-search-input"
-              placeholder="Rechercher un produit..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-            {search && (
-              <button className="ca-search-clear" onClick={() => setSearch("")}>✕</button>
-            )}
-          </div>
-          <div className="ca-sort-wrap">
-            <select className="ca-sort-select" value={sortField}
-              onChange={e => { setSortField(e.target.value); setSortDir("asc"); }}>
-              <option value="nom">Nom</option>
-              <option value="prix">Prix</option>
-            </select>
-            <button className="ca-sort-dir-btn"
-              onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}>
-              {sortDir === "asc" ? "↑" : "↓"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="ca-catalogue-table-wrap">
-        {produitsLoading ? (
-          <div className="ca-catalogue-loading">⏳ Chargement des produits...</div>
-        ) : produitsFiltres.length === 0 ? (
-          <div className="ca-catalogue-empty">Aucun produit trouvé</div>
-        ) : (
-          <table className="ca-catalogue-table">
-            <thead>
-              <tr>
-                <th className="ca-catalogue-th" onClick={() => toggleSort("nom")} style={{ cursor: "pointer" }}>Nom{sortIcon("nom")}</th>
-                <th className="ca-catalogue-th">Code-barres</th>
-                <th className="ca-catalogue-th">Catégorie</th>
-                <th className="ca-catalogue-th" onClick={() => toggleSort("prix")} style={{ cursor: "pointer" }}>Prix{sortIcon("prix")}</th>
-                <th className="ca-catalogue-th" onClick={() => toggleSort("quantite")} style={{ cursor: "pointer" }}>Stock{sortIcon("quantite")}</th>
-                <th className="ca-catalogue-th">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {produitsFiltres.map((p, i) => (
-                <tr key={p.id} className={i % 2 === 0 ? "ca-catalogue-row-even" : "ca-catalogue-row-odd"}>
-                  <td className="ca-catalogue-td ca-catalogue-nom">{p.nom}</td>
-                  <td className="ca-catalogue-td ca-catalogue-code">{p.codeBarres}</td>
-                  <td className="ca-catalogue-td">
-                    <span className="ca-catalogue-cat">{p.iconeCategorie} {p.nomCategorie  || "—"}</span>
-                  </td>
-                  <td className="ca-catalogue-td ca-catalogue-prix">{parseFloat(p.prix).toFixed(2)} DH</td>
-                  <td className="ca-catalogue-td">
-                    <span className={`ca-catalogue-stock ${p.quantite <= 5 ? "ca-stock-low" : p.quantite <= 15 ? "ca-stock-mid" : "ca-stock-ok"}`}>
-                      {p.quantite}
-                    </span>
-                  </td>
-                  <td className="ca-catalogue-td">
-                    <button className="ca-catalogue-add-btn"
-                      onClick={() => handleAjouterProduit(p)}
-                      disabled={loading || p.quantite === 0}>
-                      {p.quantite === 0 ? "Rupture" : "+ Ajouter"}
+        {page === "scan" && (
+          <div className="ca-scan-split">
+            <div className="ca-scan-right">
+              <div className="ca-catalogue-header">
+                <h3 className="ca-catalogue-title">📦 Catalogue produits</h3>
+                <div className="ca-catalogue-filters">
+                  <div className="ca-search-wrap">
+                    <span className="ca-search-icon">🔍</span>
+                    <input
+                      className="ca-search-input"
+                      placeholder="Rechercher un produit..."
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                    />
+                    {search && (
+                      <button className="ca-search-clear" onClick={() => setSearch("")}>✕</button>
+                    )}
+                  </div>
+                  <div className="ca-sort-wrap">
+                    <select className="ca-sort-select" value={sortField}
+                      onChange={e => { setSortField(e.target.value); setSortDir("asc"); }}>
+                      <option value="nom">Nom</option>
+                      <option value="prix">Prix</option>
+                    </select>
+                    <button className="ca-sort-dir-btn"
+                      onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}>
+                      {sortDir === "asc" ? "↑" : "↓"}
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                  </div>
+                </div>
+              </div>
 
-      <div className="ca-catalogue-footer">
-        {produitsFiltres.length} produit(s) affiché(s)
-      </div>
-    </div>
-
-    {/* ── DROITE : caméra ── */}
-    <div className="ca-scan-left">
-      <div className="ca-scan-info">
-        <h2>Scanner un produit</h2>
-        <p>Vente #{venteId || "..."} — {articles.length} article(s) — {total.toFixed(2)} DH</p>
-      </div>
-
-      <div className="ca-camera-wrap">
-        <div style={{ display: page === "scan" ? "block" : "none" }}>
-          <div id="caissier-qr" className="ca-camera" />
-        </div>
-        {!scanning && (
-          <div className="ca-camera-overlay">
-            <span>📷</span>
-            <p>Caméra inactive</p>
-          </div>
-        )}
-      </div>
-
-      <div className="ca-scan-btns">
-        {!scanning ? (
-          <button className="ca-btn-scan" onClick={startScan} disabled={loading}>
-            {loading ? "⏳ Chargement..." : "📷 Démarrer le scan"}
-          </button>
-        ) : (
-          <button className="ca-btn-stop" onClick={stopScan}>⏹️ Arrêter le scan</button>
-        )}
-
-          <div className="ca-code-manuel-wrap">
-      <input
-        className="ca-code-manuel-input"
-        placeholder="Saisir un code-barres..."
-        value={codeManuel}
-        onChange={e => setCodeManuel(e.target.value)}
-        onKeyDown={async e => {
-          if (e.key === "Enter" && codeManuel.trim()) {
-            let currentVenteId = venteId;
-            if (!currentVenteId) {
-              const v = await creerVente(userId);
-              currentVenteId = v.id;
-              setVenteId(v.id);
-            }
-            await handleCodeScan(codeManuel.trim(), currentVenteId);
-            setCodeManuel("");
-          }
-        }}
-      />
-      <button
-        className="ca-code-manuel-btn"
-        disabled={!codeManuel.trim() || loading}
-        onClick={async () => {
-          let currentVenteId = venteId;
-          if (!currentVenteId) {
-            const v = await creerVente(userId);
-            currentVenteId = v.id;
-            setVenteId(v.id);
-          }
-          await handleCodeScan(codeManuel.trim(), currentVenteId);
-          setCodeManuel("");
-        }}
-      >
-              ➕ Ajouter
-            </button>
-          </div>
-
-              {articles.length > 0 && (
-                <button className="ca-btn-panier" onClick={() => setPage("panier")}>
-                  🛒 Voir le panier →
-                </button>
-              )}
+              <div className="ca-catalogue-table-wrap">
+                {produitsLoading ? (
+                  <div className="ca-catalogue-loading">⏳ Chargement des produits...</div>
+                ) : produitsFiltres.length === 0 ? (
+                  <div className="ca-catalogue-empty">Aucun produit trouvé</div>
+                ) : (
+                  <table className="ca-catalogue-table">
+                    <thead>
+                      <tr>
+                        <th className="ca-catalogue-th" onClick={() => toggleSort("nom")} style={{ cursor: "pointer" }}>Nom{sortIcon("nom")}</th>
+                        <th className="ca-catalogue-th">Code-barres</th>
+                        <th className="ca-catalogue-th">Catégorie</th>
+                        <th className="ca-catalogue-th" onClick={() => toggleSort("prix")} style={{ cursor: "pointer" }}>Prix{sortIcon("prix")}</th>
+                        <th className="ca-catalogue-th" onClick={() => toggleSort("quantite")} style={{ cursor: "pointer" }}>Stock{sortIcon("quantite")}</th>
+                        <th className="ca-catalogue-th">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {produitsFiltres.map((p, i) => (
+                        <tr key={p.id} className={i % 2 === 0 ? "ca-catalogue-row-even" : "ca-catalogue-row-odd"}>
+                          <td className="ca-catalogue-td ca-catalogue-nom">{p.nom}</td>
+                          <td className="ca-catalogue-td ca-catalogue-code">{p.codeBarres}</td>
+                          <td className="ca-catalogue-td">
+                            <span className="ca-catalogue-cat">{p.iconeCategorie} {p.nomCategorie  || "—"}</span>
+                          </td>
+                          <td className="ca-catalogue-td ca-catalogue-prix">{parseFloat(p.prix).toFixed(2)} DH</td>
+                          <td className="ca-catalogue-td">
+                            <span className={`ca-catalogue-stock ${p.quantite <= 5 ? "ca-stock-low" : p.quantite <= 15 ? "ca-stock-mid" : "ca-stock-ok"}`}>
+                              {p.quantite}
+                            </span>
+                          </td>
+                          <td className="ca-catalogue-td">
+                            <button className="ca-catalogue-add-btn"
+                              onClick={() => handleAjouterProduit(p)}
+                              disabled={loading || p.quantite === 0}>
+                              {p.quantite === 0 ? "Rupture" : "+ Ajouter"}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
 
+            <div className="ca-scan-left">
+              <div className="ca-scan-info">
+                <h2>Scanner un produit</h2>
+                <p>Vente #{venteId || "..."} — {articles.length} article(s) — {total.toFixed(2)} DH</p>
+              </div>
+
+              <div className="ca-camera-wrap">
+                <div style={{ display: page === "scan" ? "block" : "none" }}>
+                  <div id="caissier-qr" className="ca-camera" />
+                </div>
+                {!scanning && (
+                  <div className="ca-camera-overlay">
+                    <span>📷</span>
+                    <p>Caméra inactive</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="ca-scan-btns">
+                {!scanning ? (
+                  <button className="ca-btn-scan" onClick={startScan} disabled={loading}>
+                    {loading ? "⏳ Chargement..." : "📷 Démarrer le scan"}
+                  </button>
+                ) : (
+                  <button className="ca-btn-stop" onClick={stopScan}>⏹️ Arrêter le scan</button>
+                )}
+
+                <div className="ca-code-manuel-wrap">
+                  <input
+                    className="ca-code-manuel-input"
+                    placeholder="Saisir un code-barres..."
+                    value={codeManuel}
+                    onChange={e => setCodeManuel(e.target.value)}
+                    onKeyDown={async e => {
+                      if (e.key === "Enter" && codeManuel.trim()) {
+                        let currentVenteId = venteId;
+                        if (!currentVenteId) {
+                          try {
+                            const v = await creerVente(userId);
+                            currentVenteId = v.id;
+                            setVenteId(v.id);
+                          } catch {
+                            flash("❌ Erreur création vente !");
+                            return;
+                          }
+                        }
+                        await handleCodeScan(codeManuel.trim(), currentVenteId);
+                        setCodeManuel("");
+                      }
+                    }}
+                  />
+                  <button
+                    className="ca-code-manuel-btn"
+                    disabled={!codeManuel.trim() || loading}
+                    onClick={async () => {
+                      let currentVenteId = venteId;
+                      if (!currentVenteId) {
+                        try {
+                          const v = await creerVente(userId);
+                          currentVenteId = v.id;
+                          setVenteId(v.id);
+                        } catch {
+                          flash("❌ Erreur création vente !");
+                          return;
+                        }
+                      }
+                      await handleCodeScan(codeManuel.trim(), currentVenteId);
+                      setCodeManuel("");
+                    }}
+                  >
+                    ➕ Ajouter
+                  </button>
+                </div>
+
+                {articles.length > 0 && (
+                  <button className="ca-btn-panier" onClick={() => setPage("panier")}>
+                    🛒 Voir le panier →
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
+        )}
 
-        </div>
-      )}
-
-        {/* ═══ PAGE PANIER ═══ */}
         {page === "panier" && (
           <div className="ca-panier-page">
             <h2 className="ca-panier-title">🛒 Récapitulatif — Vente #{venteId}</h2>
@@ -454,79 +471,74 @@ export default function CaissierApp({ nom, userId, onLogout }) {
             ) : (
               <>
                 <div className="ca-articles">
-
-                {articles.map((a, i) => (
-                <div key={i} className="ca-article-card">
-                  <div className="ca-article-info">
-                    <p className="ca-article-nom">{a.nomProduit}</p>
-                    <p className="ca-article-code">{a.codeBarres}</p>
-                  </div>
-                  <div className="ca-article-right">
-                    <div className="ca-qte-control">
-                      <button className="ca-qte-btn" onClick={async () => {
-                        if (a.quantite <= 1) return;
-                        const nouvelleQte = a.quantite - 1;
-                        // Mise à jour optimiste de l'UI
-                        setArticles(prev => {
-                          const updated = prev.map(art =>
-                            art.codeBarres === a.codeBarres
-                              ? { ...art, quantite: nouvelleQte,
-                                  sousTotal: (parseFloat(art.prix) * nouvelleQte).toFixed(2) }
-                              : art
-                          );
+                  {articles.map((a, i) => (
+                    <div key={i} className="ca-article-card">
+                      <div className="ca-article-info">
+                        <p className="ca-article-nom">{a.nomProduit}</p>
+                        <p className="ca-article-code">{a.codeBarres}</p>
+                      </div>
+                      <div className="ca-article-right">
+                        <div className="ca-qte-control">
+                          <button className="ca-qte-btn" onClick={async () => {
+                            if (a.quantite <= 1) return;
+                            const nouvelleQte = a.quantite - 1;
+                            setArticles(prev => {
+                              const updated = prev.map(art =>
+                                art.codeBarres === a.codeBarres
+                                  ? { ...art, quantite: nouvelleQte, sousTotal: (parseFloat(art.prix) * nouvelleQte).toFixed(2) }
+                                  : art
+                              );
+                              setTotal(parseFloat(updated.reduce((s, art) => s + parseFloat(art.sousTotal), 0).toFixed(2)));
+                              return updated;
+                            });
+                            incrementerStockLocal(a.codeBarres, 1);
+                            try {
+                              await modifierQuantiteArticle(venteId, a.codeBarres, nouvelleQte);
+                            } catch {
+                              flash("❌ Erreur mise à jour quantité !");
+                            }
+                          }}>−</button>
+                          <span className="ca-qte-value">{a.quantite}</span>
+                          <button className="ca-qte-btn"
+                            disabled={getStockDisponible(a.codeBarres) <= 0}
+                            onClick={async () => {
+                              if (getStockDisponible(a.codeBarres) <= 0) {
+                                flash("❌ Stock insuffisant !");
+                                return;
+                              }
+                              const nouvelleQte = a.quantite + 1;
+                              setArticles(prev => {
+                                const updated = prev.map(art =>
+                                  art.codeBarres === a.codeBarres
+                                    ? { ...art, quantite: nouvelleQte, sousTotal: (parseFloat(art.prix) * nouvelleQte).toFixed(2) }
+                                    : art
+                                );
+                                setTotal(parseFloat(updated.reduce((s, art) => s + parseFloat(art.sousTotal), 0).toFixed(2)));
+                                return updated;
+                              });
+                              decrementerStockLocal(a.codeBarres, 1);
+                              try {
+                                await modifierQuantiteArticle(venteId, a.codeBarres, nouvelleQte);
+                              } catch {
+                                flash("❌ Erreur mise à jour quantité !");
+                              }
+                            }}>+</button>
+                        </div>
+                        <span className="ca-article-prix">{a.sousTotal} DH</span>
+                        <button className="ca-qte-delete" onClick={async () => {
+                          const updated = articles.filter(art => art.codeBarres !== a.codeBarres);
+                          setArticles(updated);
                           setTotal(parseFloat(updated.reduce((s, art) => s + parseFloat(art.sousTotal), 0).toFixed(2)));
-                          return updated;
-                        });
-                        incrementerStockLocal(a.codeBarres, 1);
-                        try {
-                          await modifierQuantiteArticle(venteId, a.codeBarres, nouvelleQte);
-                        } catch {
-                          flash("❌ Erreur mise à jour quantité !");
-                        }
-                      }}>−</button>
-                      <span className="ca-qte-value">{a.quantite}</span>
-                      <button className="ca-qte-btn"
-                        disabled={getStockDisponible(a.codeBarres) <= 0}
-                        onClick={async () => {
-                        if (getStockDisponible(a.codeBarres) <= 0) {
-                          flash("❌ Stock insuffisant !");
-                          return;
-                        }
-                        const nouvelleQte = a.quantite + 1;
-                        // Mise à jour optimiste de l'UI
-                        setArticles(prev => {
-                          const updated = prev.map(art =>
-                            art.codeBarres === a.codeBarres
-                              ? { ...art, quantite: nouvelleQte,
-                                  sousTotal: (parseFloat(art.prix) * nouvelleQte).toFixed(2) }
-                              : art
-                          );
-                          setTotal(parseFloat(updated.reduce((s, art) => s + parseFloat(art.sousTotal), 0).toFixed(2)));
-                          return updated;
-                        });
-                        decrementerStockLocal(a.codeBarres, 1);
-                        try {
-                          await modifierQuantiteArticle(venteId, a.codeBarres, nouvelleQte);
-                        } catch {
-                          flash("❌ Erreur mise à jour quantité !");
-                        }
-                      }}>+</button>
+                          incrementerStockLocal(a.codeBarres, a.quantite);
+                          try {
+                            await modifierQuantiteArticle(venteId, a.codeBarres, 0);
+                          } catch {
+                            flash("❌ Erreur suppression article !");
+                          }
+                        }}>🗑️</button>
+                      </div>
                     </div>
-                    <span className="ca-article-prix">{a.sousTotal} DH</span>
-                    <button className="ca-qte-delete" onClick={async () => {
-                      const updated = articles.filter(art => art.codeBarres !== a.codeBarres);
-                      setArticles(updated);
-                      setTotal(parseFloat(updated.reduce((s, art) => s + parseFloat(art.sousTotal), 0).toFixed(2)));
-                      incrementerStockLocal(a.codeBarres, a.quantite);
-                      try {
-                        await modifierQuantiteArticle(venteId, a.codeBarres, 0);
-                      } catch {
-                        flash("❌ Erreur suppression article !");
-                      }
-                    }}>🗑️</button>
-                  </div>
-                </div>
-              ))}
+                  ))}
                 </div>
                 <div className="ca-total-bar">
                   <div className="ca-total-row"><span>Articles :</span><span>{articles.length}</span></div>
@@ -544,7 +556,6 @@ export default function CaissierApp({ nom, userId, onLogout }) {
           </div>
         )}
 
-        {/* ═══ PAGE FACTURE ═══ */}
         {page === "facture" && (
           <div className="ca-facture-page">
             {!facture ? (

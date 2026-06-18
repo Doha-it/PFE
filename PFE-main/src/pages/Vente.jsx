@@ -59,7 +59,7 @@ export default function Vente() {
       <div className="vente-stats">
         {[
           { label: "Validées", value: ventes.filter(v => v.statut === "validee").length, color: "#2E7D32", bg: "#E8F5E9", icon: "✅" },
-          { label: "En cours", value: ventes.filter(v => v.statut === "en_cours").length, color: "#F57F17", bg: "#FFF8E1", icon: "⏳" },
+          { label: "Abondonnées", value: ventes.filter(v => v.statut === "en_cours").length, color: "#F57F17", bg: "#FFF8E1", icon: "🚮" },
           { label: "Annulées", value: ventes.filter(v => v.statut === "annulee").length, color: "#C62828", bg: "#FFEBEE", icon: "❌" },
         ].map((s, i) => (
           <div key={i} className="vente-stat-card" style={{ borderLeft: `4px solid ${s.color}` }}>
@@ -80,7 +80,7 @@ export default function Vente() {
             className={`vente-filter-btn ${filter === f ? "vente-filter-active" : ""}`}
           >
             {f === "tous" ? "Tous"
-              : f === "en_cours" ? "En cours"
+              : f === "en_cours" ? "Abondonnées"
               : f === "validee" ? "✅ Validées"
               : "❌ Annulées"}
           </button>
@@ -122,7 +122,10 @@ export default function Vente() {
                         <td className="vente-table-total">{v.total} DH</td>
                         <td className="vente-table-statut">
                           <span className="vente-statut-badge" style={{ background: s.bg, color: s.color }}>
-                            {v.statut}
+                                  {v.statut === "en_cours" ? "Abandonnée" 
+                                  : v.statut === "validee" ? "Validée" 
+                                  : v.statut === "annulee" ? "Annulée" 
+                                  : v.statut}
                           </span>
                         </td>
                         <td className="vente-table-details">Détails →</td>

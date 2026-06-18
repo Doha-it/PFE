@@ -9,7 +9,7 @@ import "./Fournisseur.css";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Validation téléphone : 0612345678 / +212612345678
-const TEL_REGEX = /^(\+?[0-9][\s\-]?){6,19}[0-9]$/;
+const TEL_REGEX = /^[0-9]{10}$/;
 
 export default function Fournisseur() {
   const [fournisseurs, setFournisseurs] = useState([]);
@@ -42,8 +42,10 @@ export default function Fournisseur() {
     if (!form.nom.trim() || form.nom.trim().length < 2)
       errs.nom = "Le nom est obligatoire (min 2 caractères)";
 
-    if (form.telephone && !TEL_REGEX.test(form.telephone))
-      errs.telephone = "Numéro invalide (ex: 0612345678 ou +212612345678)";
+    if (!form.telephone.trim())
+      errs.telephone = "Le numéro de téléphone est obligatoire";
+    else if (!TEL_REGEX.test(form.telephone))
+      errs.telephone = "Le numéro doit contenir exactement 10 chiffres";
 
     if (form.email && !EMAIL_REGEX.test(form.email))
       errs.email = "Email invalide (ex: contact@exemple.com)";
@@ -150,13 +152,18 @@ export default function Fournisseur() {
             {/* Téléphone */}
             <div>
               <label className="fournisseur-label">📞 Téléphone</label>
-              <input
-                className={`fournisseur-input ${errors.telephone ? "fournisseur-input-error" : ""}`}
-                placeholder="Ex: 0612345678 ou +212612345678"
-                value={form.telephone}
-                onChange={e => setForm({ ...form, telephone: e.target.value })}
-                type="tel"
-              />
+                <input
+                  className={`fournisseur-input ${errors.telephone ? "fournisseur-input-error" : ""}`}
+                  placeholder="Numéro de téléphone"
+                  value={form.telephone}
+                  onChange={e =>
+                    setForm({
+                      ...form,
+                      telephone: e.target.value.replace(/\D/g, "").slice(0, 10)
+                    })
+                  }
+                  type="tel"
+                />
               {errors.telephone && <p className="fournisseur-error-text">{errors.telephone}</p>}
             </div>
 

@@ -6,6 +6,8 @@ import {
 } from "../services/api";
 import "./GestionCaissier.css";
 
+const TEL_REGEX = /^[0-9]{10}$/;
+
 export default function GestionCaissier() {
   const [users, setUsers] = useState([]);
   const [ventesParCaissier, setVentesParCaissier] = useState({});
@@ -15,7 +17,7 @@ export default function GestionCaissier() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ nom: "", email: "", motDePasse: "", telephone: "" });
   const [msg, setMsg] = useState({ text: "", type: "" });
-
+  const [errors, setErrors] = useState({});
   useEffect(() => { charger(); }, []);
 
   const charger = async () => {
@@ -42,9 +44,22 @@ export default function GestionCaissier() {
     setMsg({ text, type });
     setTimeout(() => setMsg({ text: "", type: "" }), 3000);
   };
+  const valider = () => {
+    const errs = {};
 
+    if (!form.telephone.trim())
+      errs.telephone = "Le numéro de téléphone est obligatoire";
+    else if (!TEL_REGEX.test(form.telephone))
+      errs.telephone = "Le numéro doit contenir exactement 10 chiffres";
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!valider()) return;
+
     try {
       if (editId) {
         const payload = {};
@@ -128,10 +143,24 @@ export default function GestionCaissier() {
             </div>
             <div>
               <label className="caissier-label">Téléphone *</label>
-              <input className="caissier-input" type="tel"
-                placeholder="0612345678"
+             <input
+                className={`caissier-input ${errors.telephone ? "caissier-input-error" : ""}`}
+                type="tel"
+                placeholder="Numéro de téléphone"
                 value={form.telephone}
-                onChange={e => setForm({ ...form, telephone: e.target.value })} required />
+                maxLength={10}
+                onChange={e =>
+                  setForm({
+                    ...form,
+                    telephone: e.target.value.replace(/\D/g, "").slice(0, 10)
+                  })
+                }
+                required/>
+                    {errors.telephone && (
+                        <p className="caissier-error-text">
+                          {errors.telephone}
+                        </p>
+                      )}
             </div>
             <div style={{ position: "relative" }}>
               <label className="caissier-label">Mot de passe *</label>

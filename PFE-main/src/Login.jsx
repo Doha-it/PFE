@@ -10,28 +10,38 @@ export default function Login({ onLogin }) {
   const [showPwd, setShowPwd] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErreur("");
-    try {
-      const data = await loginApi(email, motDePasse);
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role);
-        localStorage.setItem('nom', data.nom);
-        localStorage.setItem('id', String(data.id));
-        localStorage.setItem('email', data.email);           
-        localStorage.setItem('telephone', data.telephone || ""); 
-        onLogin(data.nom, data.role, data.id, data.email, data.telephone); 
-      } else {
-        setErreur("Email ou mot de passe incorrect !");
-      }
-    } catch {
-      setErreur("Impossible de contacter le serveur !");
-    } finally {
-      setLoading(false);
+  e.preventDefault();
+  setLoading(true);
+  setErreur("");
+  
+  try {
+    const data = await loginApi(email, motDePasse);
+    
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('role', data.role);
+      localStorage.setItem('nom', data.nom);
+      localStorage.setItem('id', String(data.id));
+      localStorage.setItem('email', data.email);           
+      localStorage.setItem('telephone', data.telephone || ""); 
+      onLogin(data.nom, data.role, data.id, data.email, data.telephone); 
+    } else {
+      setErreur("Email ou mot de passe incorrect !");
     }
-  };
+  } catch (error) {
+    console.error("❌ Erreur:", error);
+    
+    if (error.message?.includes("401") || error.response?.status === 401) {
+      setErreur("Email ou mot de passe incorrect !");
+    } else if (error.message?.includes("Network") || error.message?.includes("fetch")) {
+      setErreur("Impossible de contacter le serveur !");
+    } else {
+      setErreur("Une erreur est survenue !");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="lp-root">

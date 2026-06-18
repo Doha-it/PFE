@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Login from "./Login";
 import Layout from "./components/Layout";
 import Accueil from "./pages/Accueil";
@@ -11,25 +12,38 @@ import Parametres from "./pages/Parametres";
 import CaissierApp from "./Caissier";
 
 export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+}
+
+function AppContent() {
   const [session, setSession] = useState(null);
-  const [page, setPage] = useState("Accueil");
+  const navigate = useNavigate();
 
   const handleLogin = (nom, role, id, email, telephone) => {
-  setSession({ nom, role, id, email, telephone });
+    setSession({ nom, role, id, email, telephone });
+    if (role === "admin") {
+      navigate("/admin/accueil");
+    } else {
+      navigate("/caissier");
+    }
   };
 
   const handleLogout = () => {
     localStorage.clear();
     setSession(null);
-    setPage("Accueil");
+    navigate("/login");
   };
 
-  // Pas connecté → Login
+  // ❌ Pas connecté → Login
   if (!session) {
     return <Login onLogin={handleLogin} />;
   }
 
-  // Caissier → interface caissier dédiée
+  // ✅ Caissier → interface caissier
   if (session.role === "caissier") {
     return (
       <CaissierApp
@@ -40,42 +54,31 @@ export default function App() {
     );
   }
 
-  // Admin → interface admin avec sidebar
-  const renderPage = () => {
-    switch (page) {
-      case "Accueil":
-        return <Accueil adminName={session.nom} />;
-      case "Stock/Produit":
-        return <Stock />;
-      case "Fournisseur":
-        return <Fournisseur />;
-      case "Caissier":
-        return <GestionCaissier />;
-      case "Vente":
-        return <Vente />;
-      case "Historique":
-        return <Historique />;
-      case "Paramètre":
-        return (
-          <Parametres
-              adminName={session.nom}
-              adminEmail={session.email}
-              adminTelephone={session.telephone}
-              onLogout={handleLogout}
-                  />
-        );
-      default:
-        return <Accueil adminName={session.nom} />;
-    }
-  };
-
+  // ✅ Admin → interface admin avec router
   return (
     <Layout
-      activeNav={page}
-      onNav={setPage}
       adminName={session.nom}
-      onLogout={handleLogout}>
-      {renderPage()}
+      onLogout={handleLogout}
+    >
+      <Routes>
+        <Route path="/admin/accueil" element={<Accueil adminName={session.nom} />} />
+        <Route path="/admin/stock" element={<Stock />} />
+        <Route path="/admin/fournisseurs" element={<Fournisseur />} />
+        <Route path="/admin/caissiers" element={<GestionCaissier />} />
+        <Route path="/admin/ventes" element={<Vente />} />
+        <Route path="/admin/historique" element={<Historique />} />
+        <Route path="/admin/parametres" element={
+          <Parametres
+            adminName={session.nom}
+            adminEmail={session.email}
+            adminTelephone={session.telephone}
+            onLogout={handleLogout}
+          />
+        } />
+        <Route path="/admin/*" element={<Navigate to="/admin/accueil" />} />
+        <Route path="/" element={<Navigate to="/admin/accueil" />} />
+        <Route path="/login" element={<Navigate to="/admin/accueil" />} />
+      </Routes>
     </Layout>
   );
 }

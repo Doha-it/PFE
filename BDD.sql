@@ -9,6 +9,7 @@ CREATE DATABASE IF NOT EXISTS gestion_produits
   COLLATE utf8mb4_unicode_ci;
 USE gestion_produits;
 
+
 -- ============================================================
 -- TABLE : utilisateurs
 -- Source : classe Utilisateur (+ sous-classes Administrateur / Caissier)
@@ -33,6 +34,7 @@ CREATE TABLE fournisseurs (
   telephone VARCHAR(20)  NULL,
   email     VARCHAR(150) NULL
 );
+
 
 -- ============================================================
 -- TABLE : categories
@@ -77,10 +79,11 @@ CREATE TABLE ventes (
   utilisateur_id INT             NOT NULL,         -- caissier qui effectue la vente
   date           DATETIME        DEFAULT CURRENT_TIMESTAMP,
   total          DECIMAL(10, 2)  NOT NULL DEFAULT 0,
-  statut         ENUM('en_cours', 'validee', 'annulee') NOT NULL DEFAULT 'en_cours',
+  statut         ENUM('Abandonnées', 'validee', 'annulee') NOT NULL DEFAULT 'Abandonnées',
   CONSTRAINT fk_vente_utilisateur
     FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id)
 );
+
 
 -- ============================================================
 -- TABLE : detail_ventes  (table intermédiaire)
@@ -288,4 +291,4 @@ INSERT INTO produits (categorie_id, fournisseur_id, nom, code_barres, prix, quan
 (8, 3, 'Scotch transparent 10m',         '6111245789034',  5.00, 200),
 (8, 3, 'Post-it 100 feuilles jaunes',    '6111245789035', 15.00, 100);
 
-select * from utilisateurs ;
+

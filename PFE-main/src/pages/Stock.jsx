@@ -61,11 +61,16 @@ export default function Stock() {
         scannerRef.current = qr;
         await qr.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 280, height: 140 } },
+          { fps: 10, qrbox: { width: 200, height: 100 } },
           (text) => {
             setForm(f => ({ ...f, codeBarres: text }));
             stopScan();
-            flash("✅ Code scanné : " + text);
+            const existant = produitExistant(text);
+            if (existant) {
+              flash(`⚠️ Code déjà utilisé par "${existant.nom}" !`, "error");
+            } else {
+              flash("✅ Code scanné : " + text);
+            }
           },
           () => {}
         );
@@ -94,8 +99,23 @@ export default function Stock() {
     stopScan();
   };
 
+  const produitExistant = (code) => {
+    if (!code) return null;
+    return produits.find(
+      p => p.codeBarres?.toLowerCase().trim() === code.toLowerCase().trim()
+        && p.id !== editId
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const existant = produitExistant(form.codeBarres);
+    if (existant) {
+      flash(`⚠️ Ce code-barres existe déjà : "${existant.nom}" !`, "error");
+      return;
+    }
+
     try {
       const payload = {
         nom: form.nom,
@@ -143,15 +163,15 @@ export default function Stock() {
   const filtered = produits.filter(p => {
     const searchTerm = search.toLowerCase();
     const normalizedSearch = removeAccents(searchTerm);
-    
+
     const nomMatch = removeAccents(p.nom?.toLowerCase() || "").includes(normalizedSearch);
     const codeMatch = p.codeBarres?.toLowerCase().includes(searchTerm);
     const fournisseurMatch = removeAccents(p.nomFournisseur?.toLowerCase() || "").includes(normalizedSearch);
-    
+
     const searchMatch = search === "" || nomMatch || codeMatch || fournisseurMatch;
     const catMatch = filterCat === "" || String(p.categorieId) === filterCat;
     const fournisseurFilterMatch = filterFournisseur === "" || p.nomFournisseur === filterFournisseur;
-    
+
     return searchMatch && catMatch && fournisseurFilterMatch;
   });
 
@@ -201,6 +221,7 @@ export default function Stock() {
 
 
   const filteredAndSorted = sortProduits(filtered);
+  const produitDuplique = produitExistant(form.codeBarres);
 
   return (
     <div className="stock-container">
@@ -293,6 +314,11 @@ export default function Stock() {
                   {scanning ? "⏹️" : "📷"}
                 </button>
               </div>
+              {produitDuplique && (
+                <p className="stock-duplicate-warning">
+                  ⚠️ Ce code-barres correspond déjà à <strong>{produitDuplique.nom}</strong>
+                </p>
+              )}
             </div>
 
             {scanning && (
@@ -354,100 +380,81 @@ export default function Stock() {
         </div>
       )}
 
+      {/* Recherche et Tri */}
+      <div className="stock-search-section">
+        <input
+          className="stock-search-input"
+          placeholder="🔍 Recherche..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
+        <div className="stock-sort-inline">
+          <span className="stock-sort-title">📝 Nom :</span>
 
+          <button
+            type="button"
+            onClick={() => setSortNom(sortNom === "asc" ? "" : "asc")}
+            className={`stock-sort-btn ${
+              sortNom === "asc" ? "stock-sort-active" : ""
+            }`}
+          >
+            A→Z
+          </button>
 
+          <button
+            type="button"
+            onClick={() => setSortNom(sortNom === "desc" ? "" : "desc")}
+            className={`stock-sort-btn ${
+              sortNom === "desc" ? "stock-sort-active" : ""
+            }`}
+          >
+            Z→A
+          </button>
+        </div>
 
+        <div className="stock-sort-inline">
+          <span className="stock-sort-title">💰 Prix :</span>
 
+          <button
+            type="button"
+            onClick={() => setSortPrix(sortPrix === "asc" ? "" : "asc")}
+            className={`stock-sort-btn ${
+              sortPrix === "asc" ? "stock-sort-active" : ""
+            }`}
+          >
+            ↑
+          </button>
 
+          <button
+            type="button"
+            onClick={() => setSortPrix(sortPrix === "desc" ? "" : "desc")}
+            className={`stock-sort-btn ${
+              sortPrix === "desc" ? "stock-sort-active" : ""
+            }`}
+          >
+            ↓
+          </button>
+        </div>
 
-
-{/* Recherche et Tri */}
-<div className="stock-search-section">
-  <input
-    className="stock-search-input"
-    placeholder="🔍 Recherche..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-  />
-
-  
-
-<div className="stock-sort-inline">
-  <span className="stock-sort-title">📝 Nom :</span>
-
-  <button
-    type="button"
-    onClick={() => setSortNom(sortNom === "asc" ? "" : "asc")}
-    className={`stock-sort-btn ${
-      sortNom === "asc" ? "stock-sort-active" : ""
-    }`}
-  >
-    A→Z
-  </button>
-
-  <button
-    type="button"
-    onClick={() => setSortNom(sortNom === "desc" ? "" : "desc")}
-    className={`stock-sort-btn ${
-      sortNom === "desc" ? "stock-sort-active" : ""
-    }`}
-  >
-    Z→A
-  </button>
-</div>
-
-<div className="stock-sort-inline">
-
-
-  <span className="stock-sort-title">💰 Prix :</span>
-
-  <button
-    type="button"
-    onClick={() => setSortPrix(sortPrix === "asc" ? "" : "asc")}
-    className={`stock-sort-btn ${
-      sortPrix === "asc" ? "stock-sort-active" : ""
-    }`}
-  >
-    ↑
-  </button>
-
-  <button
-    type="button"
-    onClick={() => setSortPrix(sortPrix === "desc" ? "" : "desc")}
-    className={`stock-sort-btn ${
-      sortPrix === "desc" ? "stock-sort-active" : ""
-    }`}
-  >
-    ↓
-  </button>
-</div>
-    <div className="stock-sort-inline">
-  <span className="stock-sort-title">📦 Stock :</span>
-  <button
-    type="button"
-    onClick={() => setSortStock(sortStock === "asc" ? "" : "asc")}
-    className={`stock-sort-btn ${sortStock === "asc" ? "stock-sort-active" : ""}`}
-  >
-    ↑
-  </button>
-  <button
-    type="button"
-    onClick={() => setSortStock(sortStock === "desc" ? "" : "desc")}
-    className={`stock-sort-btn ${sortStock === "desc" ? "stock-sort-active" : ""}`}
-  >
-    ↓
-  </button>
-</div>
-
-
-
-</div>
-
-
-
-
-
+        <div className="stock-sort-inline">
+          <span className="stock-sort-title">📦 Stock :</span>
+          <button
+            type="button"
+            onClick={() => setSortStock(sortStock === "asc" ? "" : "asc")}
+            className={`stock-sort-btn ${sortStock === "asc" ? "stock-sort-active" : ""}`}
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            onClick={() => setSortStock(sortStock === "desc" ? "" : "desc")}
+            className={`stock-sort-btn ${sortStock === "desc" ? "stock-sort-active" : ""}`}
+          >
+            ↓
+          </button>
+        </div>
+      </div>
 
       {/* Table */}
       <div className="stock-table-container">

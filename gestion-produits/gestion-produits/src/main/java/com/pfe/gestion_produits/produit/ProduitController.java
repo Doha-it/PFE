@@ -74,6 +74,7 @@ public class ProduitController {
         );
     }
 
+
     @GetMapping("/{id}")
     public ResponseEntity<ProduitResponse> getParId(
             @PathVariable Long id) {
