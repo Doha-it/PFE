@@ -291,4 +291,3 @@ INSERT INTO produits (categorie_id, fournisseur_id, nom, code_barres, prix, quan
 (8, 3, 'Scotch transparent 10m',         '6111245789034',  5.00, 200),
 (8, 3, 'Post-it 100 feuilles jaunes',    '6111245789035', 15.00, 100);
 
-

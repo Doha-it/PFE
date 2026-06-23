@@ -29,18 +29,10 @@ export const generateFacturePDF = (
     doc.setFont("helvetica", "normal");
 
     doc.text(
-        `N° Facture : ${facture?.id || "-"}`,
-        15,
-        35
+        `N° Facture : ${facture?.id || "-"}`, 15, 35
     );
 
-    doc.text(
-        `Date : ${new Date().toLocaleDateString(
-            "fr-FR"
-        )}`,
-        150,
-        35
-    );
+
 
     // =========================
     // INFORMATIONS
